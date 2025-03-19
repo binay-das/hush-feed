@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id               String     @id @default(uuid())
+  name             String
+  email            String     @unique
+  password         String
+  feedbackReceived Feedback[] @relation("FeedbackReceived")
+  feedbackSent     Feedback[] @relation("FeedbackSent")
+}
+
+model Feedback {
+  id         String   @id @default(uuid())
+  message    String
+  sender     User     @relation("FeedbackSent", fields: [senderId], references: [id])
+  senderId   String
+  receiver   User     @relation("FeedbackReceived", fields: [receiverId], references: [id])
+  receiverId String
+  sentitem   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
