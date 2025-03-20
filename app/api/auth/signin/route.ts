@@ -2,8 +2,7 @@ import { prisma } from "@/lib/prismadb";
 import bcrypt from "bcryptjs";
 import { NextRequest, NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
-
-const JWT_SECRET = process.env.JWT_SECRET;
+import { JWT_SECRET } from "@/config";
 
 export const POST = async (req: NextRequest) => {
     try {
