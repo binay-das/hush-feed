@@ -23,7 +23,7 @@ model Feedback {
   senderId   String
   receiver   User     @relation("FeedbackReceived", fields: [receiverId], references: [id])
   receiverId String
-  sentitem   String
+  sentitem   String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
