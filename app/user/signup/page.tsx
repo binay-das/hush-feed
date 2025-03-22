@@ -12,6 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@radix-ui/react-label";
 import axios from "axios";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
 
@@ -49,7 +50,7 @@ export default function () {
   };
 
   return (
-    <div className="min-h-screen flex justify-center items-center px-16">
+    <div className="min-h-screen flex justify-center items-center px-16 pt-24">
       <Card className="md:w-2/3 lg:w-1/3 w-full">
         <CardHeader>
           <CardTitle className="text-3xl font-bold">Sign Up</CardTitle>
@@ -99,6 +100,9 @@ export default function () {
               {loading ? "Signing up..." : "Sign Up"}
             </Button>
           </form>
+          <Link href={"/user/signin"} className="text-red-900 italic text-sm">
+            Already have an account? Click here to log in{" "}
+          </Link>
         </CardContent>
         <CardFooter className="flex flex-col justify-between gap-8">
           <div className="border-t w-full flex flex-col items-center">

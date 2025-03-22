@@ -14,6 +14,7 @@ import {
 import { useState } from "react";
 import axios from "axios";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function () {
   const router = useRouter();
@@ -36,10 +37,12 @@ export default function () {
       });
       console.log(res.status);
       if (res.status === 200) {
-        router.replace("/dashboard"); 
+        router.replace("/dashboard");
       }
     } catch (err: any) {
-      setError(err.response?.data?.message || "Failed to sign in. Please try again.");
+      setError(
+        err.response?.data?.message || "Failed to sign in. Please try again."
+      );
     }
     setLoading(false);
   };
@@ -81,6 +84,9 @@ export default function () {
               {loading ? "Signing in..." : "Sign In"}
             </Button>
           </form>
+          <Link href={"/user/signup"} className="text-red-900 italic text-sm">
+            Don't have an account? Click here to create one{" "}
+          </Link>
         </CardContent>
         <CardFooter className="flex flex-col justify-between gap-8">
           <div className="border-t w-full flex flex-col items-center">
