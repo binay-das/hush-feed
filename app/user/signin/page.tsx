@@ -35,9 +35,10 @@ export default function () {
         email,
         password,
       });
-      console.log(res.status);
+      console.log(res);
       if (res.status === 200) {
-        router.replace("/dashboard");
+        localStorage.setItem('token', res.data.token);
+        router.replace("/home");
       }
     } catch (err: any) {
       setError(
