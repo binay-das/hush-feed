@@ -17,13 +17,15 @@ model User {
 }
 
 model Room {
-  id        String     @id @default(uuid())
-  creator   User       @relation("UserRooms", fields: [creatorId], references: [id])
-  creatorId String
-  questions Question[]
-  responses Response[] @relation("RoomResponses") 
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
+  id          String     @id @default(uuid())
+  title       String     @default("Defult title")
+  description String     @default("Defult description")
+  creator     User       @relation("UserRooms", fields: [creatorId], references: [id])
+  creatorId   String
+  questions   Question[]
+  responses   Response[] @relation("RoomResponses")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 }
 
 model Question {
@@ -44,11 +46,11 @@ enum QuestionType {
 }
 
 model Response {
-  id          String   @id @default(uuid())
-  room        Room     @relation("RoomResponses", fields: [roomId], references: [id])
-  roomId      String
-  question    Question @relation(fields: [questionId], references: [id])
-  questionId  String
-  responseText    String
-  submittedAt DateTime @default(now())
+  id           String   @id @default(uuid())
+  room         Room     @relation("RoomResponses", fields: [roomId], references: [id])
+  roomId       String
+  question     Question @relation(fields: [questionId], references: [id])
+  questionId   String
+  responseText String
+  submittedAt  DateTime @default(now())
 }
