@@ -64,10 +64,16 @@ export const POST = async (req: NextRequest, { params }: { params: { roomId: str
 
 export const GET = async (req: NextRequest, { params }: { params: { roomId: string } }) => {
     try {
-        const { roomId } = params;
-        const { creatorId } = await req.json(); 
+        const authToken = req.headers.get("Authorization");
+        if (!authToken || !authToken.startsWith("Bearer ")) {
+            return NextResponse.json({error: "Unauthorized" }, {status: 401});
+        }
+        const token = authToken.split(" ")[1];
+        const decoded = jwt.verify(token, JWT_SECRET) as {id: string};
+        const userId = decoded.id;
 
-        // Validate room exists
+        const { roomId } = params;
+
         const room = await prisma.room.findUnique({
             where: { id: roomId }
         });
@@ -76,15 +82,25 @@ export const GET = async (req: NextRequest, { params }: { params: { roomId: stri
             return NextResponse.json({ error: "Room not found" }, { status: 404 });
         }
 
-        // Ensure only the creator can view responses
-        if (room.creatorId !== creatorId) {
+        if (room.creatorId !== userId) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
         }
 
-        // Fetch all responses for the room
         const responses = await prisma.response.findMany({
             where: { roomId },
-            include: { question: true } // Include question details
+            select: {
+                id: true,
+                responseText: true,
+                submittedAt: true,
+                question: {
+                    select: {
+                        id: true,
+                        text: true,
+                        type: true,
+                        options: true
+                    }
+                }
+            }
         });
 
         return NextResponse.json({ responses }, { status: 200 });
