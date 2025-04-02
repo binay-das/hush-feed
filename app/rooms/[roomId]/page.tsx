@@ -10,6 +10,9 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Slider } from "@/components/ui/slider";
+import { ArrowLeft, Loader2, MessageSquare } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
+import { Progress } from "@/components/ui/progress";
 
 interface Question {
   id: string;
@@ -30,8 +33,8 @@ const RoomAnswerPage = () => {
   const [responses, setResponses] = useState<Response[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [progress, setProgress] = useState(0);
 
-  // Fetch Questions for the Room
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
@@ -47,14 +50,17 @@ const RoomAnswerPage = () => {
     fetchQuestions();
   }, [roomId]);
 
-  // Update Responses
+  useEffect(() => {
+    const answeredQuestions = responses.filter(r => r.responseText.trim() !== "").length;
+    setProgress((answeredQuestions / questions.length) * 100);
+  }, [responses, questions]);
+
   const handleResponseChange = (questionId: string, value: string) => {
     setResponses((prev) =>
       prev.map((resp) => (resp.questionId === questionId ? { ...resp, responseText: value } : resp))
     );
   };
 
-  // Submit Responses
   const submitResponses = async () => {
     setLoading(true);
     setError("");
@@ -74,7 +80,6 @@ const RoomAnswerPage = () => {
           headers: { Authorization: `Bearer ${authToken}` },
         }
       );
-      console.log("Responses submitted!");
       router.push(`/room/${roomId}/thank-you`);
     } catch (error) {
       console.error("Error submitting responses", error);
@@ -85,67 +90,132 @@ const RoomAnswerPage = () => {
   };
 
   return (
-    <div className="max-w-3xl mx-auto p-6 pt-24">
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>Answer Room Questions</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {questions.map((question) => (
-            <div key={question.id} className="my-4 p-4 border rounded-md">
-              <Label>{question.text}</Label>
+    <main className="min-h-screen bg-gradient-to-b from-background to-secondary/20">
+      <div className="container mx-auto px-4 py-16">
+        <div className="max-w-3xl mx-auto">
+          <Button
+            variant="ghost"
+            className="mb-6"
+            onClick={() => router.push(`/room/${roomId}`)}
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Room
+          </Button>
 
-              {/* TEXT TYPE */}
-              {question.type === "TEXT" && (
-                <Input
-                  placeholder="Type your answer..."
-                  value={responses.find((r) => r.questionId === question.id)?.responseText || ""}
-                  onChange={(e) => handleResponseChange(question.id, e.target.value)}
-                />
-              )}
+          <div className="space-y-2 mb-8">
+            <h1 className="text-3xl font-bold tracking-tight">Room Questions</h1>
+            <p className="text-muted-foreground">
+              Please answer all questions to complete the session
+            </p>
+          </div>
 
-              {/* MULTIPLE CHOICE */}
-              {question.type === "MULTIPLE" && (
-                <RadioGroup
-                  value={responses.find((r) => r.questionId === question.id)?.responseText || ""}
-                  onValueChange={(value) => handleResponseChange(question.id, value)}
-                  className="space-y-2"
-                >
-                  {question.options.map((option, index) => (
-                    <div key={index} className="flex items-center space-x-2">
-                      <RadioGroupItem value={option} />
-                      <Label>{option}</Label>
+          <Card className="shadow-lg">
+            <CardHeader>
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-primary/10 rounded-full">
+                  <MessageSquare className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <CardTitle>Progress</CardTitle>
+                  <div className="mt-2">
+                    <Progress value={progress} className="h-2" />
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    {Math.round(progress)}% complete
+                  </p>
+                </div>
+              </div>
+            </CardHeader>
+
+            <CardContent className="space-y-6">
+              {questions.map((question, index) => (
+                <div key={question.id} className="space-y-4">
+                  <div className="flex items-start gap-4">
+                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted text-sm font-medium">
+                      {index + 1}
+                    </span>
+                    <div className="space-y-1.5 flex-1">
+                      <Label className="text-base">{question.text}</Label>
+
+                      {question.type === "TEXT" && (
+                        <Input
+                          placeholder="Type your answer..."
+                          value={responses.find((r) => r.questionId === question.id)?.responseText || ""}
+                          onChange={(e) => handleResponseChange(question.id, e.target.value)}
+                          className="mt-2"
+                        />
+                      )}
+
+                      {question.type === "MULTIPLE" && (
+                        <RadioGroup
+                          value={responses.find((r) => r.questionId === question.id)?.responseText || ""}
+                          onValueChange={(value) => handleResponseChange(question.id, value)}
+                          className="space-y-2 mt-2"
+                        >
+                          {question.options.map((option, index) => (
+                            <div key={index} className="flex items-center space-x-2">
+                              <RadioGroupItem value={option} id={`${question.id}-${index}`} />
+                              <Label htmlFor={`${question.id}-${index}`}>{option}</Label>
+                            </div>
+                          ))}
+                        </RadioGroup>
+                      )}
+
+                      {question.type === "RATING" && (
+                        <div className="space-y-2 mt-4">
+                          <Slider
+                            defaultValue={[3]}
+                            min={1}
+                            max={5}
+                            step={1}
+                            onValueChange={(value) => handleResponseChange(question.id, value[0].toString())}
+                          />
+                          <div className="flex justify-between text-sm text-muted-foreground">
+                            <span>1</span>
+                            <span>5</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </RadioGroup>
-              )}
+                  </div>
+                  {index < questions.length - 1 && <Separator />}
+                </div>
+              ))}
 
-              {/* RATING TYPE */}
-              {question.type === "RATING" && (
-                <Slider
-                  defaultValue={[3]}
-                  min={1}
-                  max={5}
-                  step={1}
-                  onValueChange={(value) => handleResponseChange(question.id, value[0].toString())}
-                  className="mt-2"
-                />
+              {error && (
+                <div className="bg-destructive/10 text-destructive text-sm p-3 rounded-md mt-4">
+                  {error}
+                </div>
               )}
-            </div>
-          ))}
+            </CardContent>
 
-          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
-        </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => router.push(`/room/${roomId}`)}>
-            Cancel
-          </Button>
-          <Button onClick={submitResponses} disabled={loading}>
-            {loading ? "Submitting..." : "Submit"}
-          </Button>
-        </CardFooter>
-      </Card>
-    </div>
+            <Separator />
+            <CardFooter className="flex justify-between p-6">
+              <Button
+                variant="outline"
+                onClick={() => router.push(`/room/${roomId}`)}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={submitResponses}
+                disabled={loading || progress < 100}
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Submitting...
+                  </>
+                ) : (
+                  "Submit Responses"
+                )}
+              </Button>
+            </CardFooter>
+          </Card>
+        </div>
+      </div>
+    </main>
   );
 };
 
