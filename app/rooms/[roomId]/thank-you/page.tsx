@@ -5,8 +5,11 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Home } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 const ThankYouPage = () => {
+  const params = useSearchParams();
+  const alreadySubmitted = params.get("alreadySubmitted") === "true";
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-secondary flex items-center justify-center p-4">
       <motion.div
@@ -30,7 +33,7 @@ const ThankYouPage = () => {
             transition={{ delay: 0.3 }}
           >
             <h1 className="text-3xl font-bold text-center mb-4">
-              Thank you for your responses!
+              {alreadySubmitted ? "You've already submitted feedback for this room": "Thank you for your responses!"}
             </h1>
             <p className="text-muted-foreground text-center mb-8">
               Your feedback has been submitted successfully and will help us improve our services.
@@ -43,7 +46,7 @@ const ThankYouPage = () => {
             transition={{ delay: 0.5 }}
             className="flex justify-center"
           >
-            <Link href="/">
+            <Link href="/home">
               <Button variant="outline" size="lg" className="gap-2">
                 <Home className="w-4 h-4" />
                 Return Home
