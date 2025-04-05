@@ -1,13 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Menu, X, Vote } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import axios from "axios";
+import { NEXT_PUBLIC_BASE_URL } from "@/config";
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [token, setToken] = useState<string | null>(null);
 
   const menuItems = [
     { label: "Features", href: "#features" },
@@ -15,6 +25,30 @@ export function Navbar() {
     { label: "Testimonials", href: "#testimonials" },
     { label: "Pricing", href: "#pricing" },
   ];
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const authToken = localStorage.getItem("token");
+      if (!authToken) {
+        console.log("Auth token not found!");
+        return;
+      }
+      setToken(authToken);
+      const { data } = await axios.get(`${NEXT_PUBLIC_BASE_URL}/api/user`, {
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+        },
+      });
+  
+      if (!data) {
+        console.log("User not found!");
+        return;
+      }
+      setUser(data);
+      console.log(data);
+    };
+    fetchUser();
+  }, []);
 
   return (
     <nav className="fixed w-full sm:px-8 bg-background/80 backdrop-blur-md z-50 border-b shadow-stone-300 shadow-md">
@@ -38,17 +72,36 @@ export function Navbar() {
             ))}
           </div>
 
-          <div className="hidden md:flex items-center gap-4">
-            <Link href="/user/signin">
-              <Button size="sm">
-                Sign In
-              </Button>
-            </Link>
-            <Link href="/user/signup">
-              <Button variant="outline" size="sm">Get Started</Button>
-            </Link>
-          </div>
-
+          {!user ? (
+            <div className="hidden md:flex items-center gap-4">
+              <Link href="/user/signin">
+                <Button size="sm">Sign In</Button>
+              </Link>
+              <Link href="/user/signup">
+                <Button variant="outline" size="sm">
+                  Get Started
+                </Button>
+              </Link>
+            </div>
+          ) : (
+            <div className="hidden md:flex items-center gap-4">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Avatar className="cursor-pointer">
+                    <AvatarImage
+                      src="https://github.com/shadcn.png"
+                      alt="@shadcn"
+                    />
+                    <AvatarFallback>CN</AvatarFallback>
+                  </Avatar>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="">
+                  <Button variant={'outline'} className="w-full">Profile</Button>
+                  <Button variant={'outline'} className="w-full" onClick={() => {localStorage.removeItem("token");setToken(null);setUser(null)}}>LogOut</Button>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          )}
           <button
             className="md:hidden p-2"
             onClick={() => setIsOpen(!isOpen)}
@@ -80,12 +133,12 @@ export function Navbar() {
               ))}
               <div className="flex flex-col gap-2 pt-4 border-t">
                 <Link href="/user/signin">
-                  <Button size="sm">
-                    Sign In
-                  </Button>
+                  <Button size="sm">Sign In</Button>
                 </Link>
                 <Link href="/user/signup">
-                  <Button variant="outline" size="sm">Get Started</Button>
+                  <Button variant="outline" size="sm">
+                    Get Started
+                  </Button>
                 </Link>
               </div>
             </div>
