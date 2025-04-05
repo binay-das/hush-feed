@@ -14,6 +14,7 @@ model User {
   password String
 
   rooms Room[] @relation("UserRooms")
+  responses Response[] 
 }
 
 model Room {
@@ -53,4 +54,6 @@ model Response {
   questionId   String
   responseText String
   submittedAt  DateTime @default(now())
+  user         User?    @relation(fields: [userId], references: [id])
+  userId       String?
 }
