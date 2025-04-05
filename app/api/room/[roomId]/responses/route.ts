@@ -7,10 +7,10 @@ export const POST = async (req: NextRequest, { params }: { params: { roomId: str
     try {
         const authToken = req.headers.get("Authorization");
         if (!authToken || !authToken.startsWith("Bearer ")) {
-            return NextResponse.json({error: "Unauthorized" }, {status: 401});
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
         const token = authToken.split(" ")[1];
-        const decoded = jwt.verify(token, JWT_SECRET) as {id: string};
+        const decoded = jwt.verify(token, JWT_SECRET) as { id: string };
         const userId = decoded.id;
 
         const { roomId } = params;
@@ -24,6 +24,20 @@ export const POST = async (req: NextRequest, { params }: { params: { roomId: str
         if (!room) {
             return NextResponse.json({ error: "Room not found" }, { status: 404 });
         }
+
+        const alreadySubmitted = await prisma.response.findFirst({
+            where: {
+                roomId,
+                userId
+            }
+        });
+        if (alreadySubmitted) {
+            return NextResponse.json(
+                { error: "You have already submitted responses to this room." },
+                { status: 400 }
+            );
+        }
+
         const { responses } = await req.json();
         if (!responses || !Array.isArray(responses) || responses.length === 0) {
             return NextResponse.json({ error: "No responses provided" }, { status: 400 });
@@ -49,7 +63,8 @@ export const POST = async (req: NextRequest, { params }: { params: { roomId: str
             data: responses.map(response => ({
                 roomId,
                 questionId: response.questionId,
-                responseText: response.responseText
+                responseText: response.responseText,
+                userId
             }))
         });
 
@@ -66,10 +81,10 @@ export const GET = async (req: NextRequest, { params }: { params: { roomId: stri
     try {
         const authToken = req.headers.get("Authorization");
         if (!authToken || !authToken.startsWith("Bearer ")) {
-            return NextResponse.json({error: "Unauthorized" }, {status: 401});
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
         const token = authToken.split(" ")[1];
-        const decoded = jwt.verify(token, JWT_SECRET) as {id: string};
+        const decoded = jwt.verify(token, JWT_SECRET) as { id: string };
         const userId = decoded.id;
 
         const { roomId } = params;

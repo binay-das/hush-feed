@@ -24,7 +24,7 @@ export const POST = async (req: NextRequest, { params }: { params: { roomId: str
         });
 
         if (!room) {
-            return { status: 404, json: { error: "Room not found" } };
+            return NextResponse.json({ error: "Room not found" }, { status: 404 });
         }
 
         if (userId !== room.creatorId) {

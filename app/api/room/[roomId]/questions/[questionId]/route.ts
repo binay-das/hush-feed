@@ -1,9 +1,21 @@
+import { JWT_SECRET } from "@/config";
+import jwt from "jsonwebtoken";
 import { prisma } from "@/lib/prismadb";
 import { NextRequest, NextResponse } from "next/server";
 
 export const POST = async (req: NextRequest, { params }: { params: { roomId: string, questionId: string } }) => {
     try {
+        const authToken = req.headers.get("Authorization");
+        if (!authToken || !authToken.startsWith("Bearer ")) {
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        const token = authToken.split(" ")[1];
+        const decoded = jwt.verify(token, JWT_SECRET) as { id: string };
+        const userId = decoded.id;
+
         const { roomId, questionId } = params;
+        
         const { responseText } = await req.json();
 
         if (!responseText) {
@@ -28,6 +40,19 @@ export const POST = async (req: NextRequest, { params }: { params: { roomId: str
 
         if (!question) {
             return NextResponse.json({ error: "Question not found" }, { status: 404 });
+        }
+
+        const alreadySubmitted = await prisma.response.findFirst({
+            where: {
+                roomId,
+                userId
+            }
+        });
+        if (alreadySubmitted) {
+            return NextResponse.json(
+                { error: "You have already submitted responses to this room." },
+                { status: 400 }
+            );
         }
 
         const newResponse = await prisma.response.create({

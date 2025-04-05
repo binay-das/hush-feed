@@ -27,7 +27,7 @@ export const POST = async (req: NextRequest) => {
             id: user.id,
             // email: user.email,
             // name: user.name
-        }, JWT_SECRET, { expiresIn: "1h" });
+        }, JWT_SECRET, { expiresIn: "24h" });
 
         return NextResponse.json({ message: "User signed in succesfully", token }, { status: 200 });
 

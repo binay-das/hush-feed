@@ -28,10 +28,10 @@ export const POST = async (req: NextRequest) => {
         if (!room) {
             return NextResponse.json({ error: "Room not found" }, { status: 404 });
         }
-        await prisma.user.update({
-            where: { id: userId },
-            data: { rooms: { connect: { id: roomId } } }
-        });
+        // await prisma.user.update({
+        //     where: { id: userId },
+        //     data: { rooms: { connect: { id: roomId } } }
+        // });
 
         return NextResponse.json({ message: "Joined room successfully" }, { status: 200 });
     } catch (error) {
