@@ -5,7 +5,13 @@ import { useParams, useRouter } from "next/navigation";
 import axios from "axios";
 import { NEXT_PUBLIC_BASE_URL } from "@/config";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -34,13 +40,26 @@ const RoomAnswerPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [progress, setProgress] = useState(0);
+  const [isSubmitted, setIsSubmitted] = useState(false);
 
   useEffect(() => {
     const fetchQuestions = async () => {
       try {
-        const { data } = await axios.get(`${NEXT_PUBLIC_BASE_URL}/api/room/${roomId}/questions`);
+        const { data } = await axios.get(
+          `${NEXT_PUBLIC_BASE_URL}/api/room/${roomId}/questions`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("token")}`,
+            },
+          }
+        );
         setQuestions(data.questions);
-        setResponses(data.questions.map((q: Question) => ({ questionId: q.id, responseText: "" })));
+        setResponses(
+          data.questions.map((q: Question) => ({
+            questionId: q.id,
+            responseText: "",
+          }))
+        );
       } catch (error) {
         console.error("Error fetching questions", error);
         setError("Failed to load questions.");
@@ -49,15 +68,45 @@ const RoomAnswerPage = () => {
 
     fetchQuestions();
   }, [roomId]);
+  useEffect(() => {
+    const checkIfAlreadySubmitted = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+
+      try {
+        const { data } = await axios.get(
+          `${NEXT_PUBLIC_BASE_URL}/api/room/${roomId}/submitted`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (data.alreadySubmitted) {
+          setIsSubmitted(true);
+          router.replace(`/rooms/${roomId}/thank-you?alreadySubmitted=true`);
+        }
+      } catch (error) {
+        console.error("Failed to check submission status", error);
+      }
+    };
+
+    checkIfAlreadySubmitted();
+  }, [roomId]);
 
   useEffect(() => {
-    const answeredQuestions = responses.filter(r => r.responseText.trim() !== "").length;
+    const answeredQuestions = responses.filter(
+      (r) => r.responseText.trim() !== ""
+    ).length;
     setProgress((answeredQuestions / questions.length) * 100);
   }, [responses, questions]);
 
   const handleResponseChange = (questionId: string, value: string) => {
     setResponses((prev) =>
-      prev.map((resp) => (resp.questionId === questionId ? { ...resp, responseText: value } : resp))
+      prev.map((resp) =>
+        resp.questionId === questionId ? { ...resp, responseText: value } : resp
+      )
     );
   };
 
@@ -80,7 +129,7 @@ const RoomAnswerPage = () => {
           headers: { Authorization: `Bearer ${authToken}` },
         }
       );
-      router.push(`/room/${roomId}/thank-you`);
+      router.push(`/rooms/${roomId}/thank-you`);
     } catch (error) {
       console.error("Error submitting responses", error);
       setError("Failed to submit responses.");
@@ -103,7 +152,9 @@ const RoomAnswerPage = () => {
           </Button>
 
           <div className="space-y-2 mb-8">
-            <h1 className="text-3xl font-bold tracking-tight">Room Questions</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Room Questions
+            </h1>
             <p className="text-muted-foreground">
               Please answer all questions to complete the session
             </p>
@@ -140,22 +191,40 @@ const RoomAnswerPage = () => {
                       {question.type === "TEXT" && (
                         <Input
                           placeholder="Type your answer..."
-                          value={responses.find((r) => r.questionId === question.id)?.responseText || ""}
-                          onChange={(e) => handleResponseChange(question.id, e.target.value)}
+                          value={
+                            responses.find((r) => r.questionId === question.id)
+                              ?.responseText || ""
+                          }
+                          onChange={(e) =>
+                            handleResponseChange(question.id, e.target.value)
+                          }
                           className="mt-2"
                         />
                       )}
 
                       {question.type === "MULTIPLE" && (
                         <RadioGroup
-                          value={responses.find((r) => r.questionId === question.id)?.responseText || ""}
-                          onValueChange={(value) => handleResponseChange(question.id, value)}
+                          value={
+                            responses.find((r) => r.questionId === question.id)
+                              ?.responseText || ""
+                          }
+                          onValueChange={(value) =>
+                            handleResponseChange(question.id, value)
+                          }
                           className="space-y-2 mt-2"
                         >
                           {question.options.map((option, index) => (
-                            <div key={index} className="flex items-center space-x-2">
-                              <RadioGroupItem value={option} id={`${question.id}-${index}`} />
-                              <Label htmlFor={`${question.id}-${index}`}>{option}</Label>
+                            <div
+                              key={index}
+                              className="flex items-center space-x-2"
+                            >
+                              <RadioGroupItem
+                                value={option}
+                                id={`${question.id}-${index}`}
+                              />
+                              <Label htmlFor={`${question.id}-${index}`}>
+                                {option}
+                              </Label>
                             </div>
                           ))}
                         </RadioGroup>
@@ -168,7 +237,12 @@ const RoomAnswerPage = () => {
                             min={1}
                             max={5}
                             step={1}
-                            onValueChange={(value) => handleResponseChange(question.id, value[0].toString())}
+                            onValueChange={(value) =>
+                              handleResponseChange(
+                                question.id,
+                                value[0].toString()
+                              )
+                            }
                           />
                           <div className="flex justify-between text-sm text-muted-foreground">
                             <span>1</span>
